@@ -19,7 +19,7 @@ class Net_layer:
 
 	def update(self, η, T, λ):
 		ΔW = η * np.outer(self.X, self.X_)
-		self.W -= Hebbian_Metro(self.ε, T, ΔW)
+		self.W -= Hebbian_Metro(self.ε, T, ΔW, rev=False)
 
 		self.ε -= change_ε(self.X, self.X_) * λ
 
@@ -108,9 +108,15 @@ def se(y, y_pred):
 	"""
 	return (y - y_pred)**2
 
-def Hebbian_Metro(ε, T, ΔW):
-	ξ = np.random.rand()
-	return np.where(ξ < np.exp(-ε/T), ΔW, 0)
+def Hebbian_Metro(ε, T, ΔW, rev = False):
+	if rev:
+		ξ = np.random.rand()
+		χ = np.random.uniform(0, 1-ξ)
+		return np.where(ξ < np.exp(-ε/T), ΔW, \
+			np.where(χ < np.exp(-ε/T), -ΔW, 0))
+	else:
+		ξ = np.random.rand()
+		return np.where(ξ < np.exp(-ε/T), ΔW, 0)
 
 def sigmoid(x):
 	return 1/(1 + np.exp(-x))
