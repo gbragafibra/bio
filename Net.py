@@ -157,16 +157,30 @@ def sigmoid(x):
 
 if __name__ == "__main__":
 	np.random.seed(37)
-	N = 10
-	X = np.array([np.random.randint(0, 2, size=N).reshape(1, -1) for _ in range(100)])
-	y = np.array([np.random.randint(0, 2) for _ in range(100)]).reshape(-1, 1)
-	layer_sizes = [N, 20, 1]
-	T = 50
+	N = 784
+
+	from sklearn.datasets import fetch_openml
+
+	#MNIST
+	mnist = fetch_openml("mnist_784", version=1)
+	X, y = mnist["data"], mnist["target"]
+	X = X.astype(np.float32)/255
+	y = y.astype(np.int32)
+	X = X.values.reshape(-1, 28, 28)
+
+	#Only 0s and 1s for now
+	mask = (y == 0) | (y == 1)
+	X = X[mask][:1000]
+	y = y[mask][:1000]
+	y = y.values
+
+	layer_sizes = [N, 50, 1]
+	T = 10
 	γ = 0.95
 	β = 0.1
 	net = Net(layer_sizes, T, γ, β)
 
 	η = 0.1
 	λ = 0.1
-	epochs = 200
+	epochs = 10
 	net.run(X, y, η, λ, epochs, 0.7, 0.3, plot = True)
