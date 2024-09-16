@@ -67,8 +67,8 @@ class Net:
 		train_size = int(X.shape[0] * train_ω)
 		#test_size = int(X.shape[0] * test_ω)
 
-		train_idxs = idxs[train_size:]
-		test_idxs = idxs[:train_size]
+		train_idxs = idxs[:train_size]
+		test_idxs = idxs[train_size:]
 		X_train, y_train = X[train_idxs], y[train_idxs]
 		X_test, y_test = X[test_idxs], y[test_idxs]
 
@@ -113,9 +113,12 @@ class Net:
 
 		train_y = np.array(train_y).reshape(-1, 1)
 		test_y = np.array(test_y).reshape(-1, 1)
+		y_train = y_train.reshape(-1, 1)
+		y_test = y_test.reshape(-1, 1)
+
 		Acc_train = np.sum(np.where(np.where(train_y > 0.5, 1, 0) == y_train, 1, 0), axis = 0)/X_train.shape[0]
 		Acc_test = np.sum(np.where(np.where(test_y > 0.5, 1, 0) == y_test, 1, 0), axis = 0)/X_test.shape[0]
-		print(f"Training Accuracy: {Acc_train.item()}, Testing Accuracy: {Acc_test.item()}")
+		print(f"Training Accuracy: {Acc_train.item():.4f}, Testing Accuracy: {Acc_test.item():.4f}")
 		if plot:
 			plt.plot(range(1, epochs + 1), train_losses, "k", label = "Train Loss")
 			plt.plot(range(1, epochs + 1), test_losses, "r", label = "Test Loss")
@@ -155,32 +158,32 @@ def sigmoid(x):
 	return 1/(1 + np.exp(-x))
 
 
+def scaler(X):
+	"""
+	Standardize data
+	"""
+
+	return (X - np.mean(X, axis = 0))/np.std(X, axis = 0)
+
 if __name__ == "__main__":
 	np.random.seed(37)
-	N = 784
 
-	from sklearn.datasets import fetch_openml
+	from sklearn.datasets import load_breast_cancer
 
-	#MNIST
-	mnist = fetch_openml("mnist_784", version=1)
-	X, y = mnist["data"], mnist["target"]
-	X = X.astype(np.float32)/255
-	y = y.astype(np.int32)
-	X = X.values.reshape(-1, 28, 28)
+	data = load_breast_cancer()
+	X = data.data
+	y = data.target
+	X = scaler(X)
 
-	#Only 0s and 1s for now
-	mask = (y == 0) | (y == 1)
-	X = X[mask][:1000]
-	y = y[mask][:1000]
-	y = y.values
+	N = X[0].shape[0]
 
-	layer_sizes = [N, 50, 1]
-	T = 10
-	γ = 0.95
-	β = 0.1
+	layer_sizes = [N, 50, 10, 1]
+	T = 100
+	γ = 0.1
+	β = 0.05
 	net = Net(layer_sizes, T, γ, β)
 
-	η = 0.1
-	λ = 0.1
-	epochs = 10
+	η = 0.005
+	λ = 0.3
+	epochs = 100
 	net.run(X, y, η, λ, epochs, 0.7, 0.3, plot = True)
